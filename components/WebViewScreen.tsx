@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, ActivityIndicator, StyleSheet, Platform } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, ActivityIndicator, StyleSheet, Platform, AppState, AppStateStatus } from 'react-native';
 import { WebView } from 'react-native-webview';
 import Radar from 'react-native-radar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,9 +14,12 @@ export default function WebViewScreen({ routePath }: WebViewScreenProps) {
     const router = useRouter();
     const { isLoaded: authLoaded, userId } = useAuth();
     const { session } = useSession();
-    const [uri, setUri] = React.useState('');
+    const [uri, setUri] = useState('');
+    const [webviewKey, setWebviewKey] = useState(0); // Used to force reload on crash/resume
+    const appState = useRef(AppState.currentState);
     const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://omni-lilac.vercel.app';
 
+    // 1. Prepare URI Logic
     useEffect(() => {
         const prepareUri = async () => {
             if (session) {
@@ -41,10 +44,30 @@ export default function WebViewScreen({ routePath }: WebViewScreenProps) {
         prepareUri();
     }, [routePath, session]);
 
-    // Request Native Permissions for the WebView to inherit
+    // 2. Handle App State (Resume from Background)
+    useEffect(() => {
+        const subscription = AppState.addEventListener('change', (nextAppState) => {
+            if (
+                appState.current.match(/inactive|background/) &&
+                nextAppState === 'active'
+            ) {
+                console.log('App has come to the foreground! checking webview...');
+                // Optional: We can force a reload if needed, but usually just being active is enough.
+                // If users report persistent blank screens, uncomment the line below:
+                // setWebviewKey(prev => prev + 1); 
+            }
+            appState.current = nextAppState;
+        });
+
+        return () => {
+            subscription.remove();
+        };
+    }, []);
+
+    // Request Native Permissions
     useEffect(() => {
         const req = async () => {
-            const status = await Radar.requestPermissions(false); // Foreground is enough for WebView
+            const status = await Radar.requestPermissions(false);
             console.log('WebView Native Permission Status:', status);
         };
         req();
@@ -52,7 +75,7 @@ export default function WebViewScreen({ routePath }: WebViewScreenProps) {
 
     const insets = useSafeAreaInsets();
 
-    // Script to hide web-only elements and add bottom padding for the floating tab bar
+    // Script to hide web-only elements
     const hideWebElementsScript = `
         (function() {
             const style = document.createElement('style');
@@ -83,15 +106,11 @@ export default function WebViewScreen({ routePath }: WebViewScreenProps) {
     `;
 
     const handleNavigation = (navState: any) => {
-        // Intercept Web Sign-In/Up redirects and force Native Login
         const url = navState.url.toLowerCase();
         if (url.includes('sign-in') || url.includes('sign-up') || url.includes('clerk.com')) {
             if (!userId) {
-                // Not logged in natively? Force Native Sign In
                 router.replace('/(auth)/sign-in');
             } else {
-                // If they are logged in natively but web is asking for sign in, 
-                // it might be a session mismatch. Redirect to homepage for now.
                 router.replace('/');
             }
             return false;
@@ -99,9 +118,13 @@ export default function WebViewScreen({ routePath }: WebViewScreenProps) {
         return true;
     };
 
+    // 3. Crash Recovery Handler
+    const reload = () => setWebviewKey(prev => prev + 1);
+
     return (
         <View style={s.container}>
             <WebView
+                key={webviewKey} // Changing this forces a full unmount/remount
                 source={{
                     uri,
                     headers: {
@@ -124,6 +147,18 @@ export default function WebViewScreen({ routePath }: WebViewScreenProps) {
                 geolocationEnabled={true}
                 mediaPlaybackRequiresUserAction={false}
                 pullToRefreshEnabled={true}
+
+                // CRITICAL: Handle Android Process Crashes/Terminations
+                onRenderProcessGone={syntheticEvent => {
+                    const { nativeEvent } = syntheticEvent;
+                    console.warn('WebView Process Gone: ', nativeEvent.didCrash);
+                    reload(); // Auto-reload on crash
+                }}
+                onContentProcessDidTerminate={syntheticEvent => {
+                    const { nativeEvent } = syntheticEvent;
+                    console.warn('WebView Content Process Terminated: ', nativeEvent);
+                    reload(); // Auto-reload on termination
+                }}
             />
         </View>
     );
