@@ -1,0 +1,43 @@
+{
+    "cli": {
+        "version": ">= 10.0.0",
+        "appVersionSource": "remote"
+    },
+    "build": {
+        "development": {
+            "developmentClient": true,
+            "distribution": "internal",
+            "env": {
+                "EXPO_PUBLIC_RADAR_PUBLISHABLE_KEY": "prj_test_pk_7fae8848080509ff855ccac5ac8e4fd0552756bf",
+                "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_YXBwYXJlbnQtZmlsbHktMTEuY2xlcmsuYWNjb3VudHMuZGV2JA",
+                "EXPO_PUBLIC_API_URL": "http://10.240.67.216:3000",
+                "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
+            }
+        },
+        "preview": {
+            "channel": "preview",
+            "distribution": "internal",
+            "env": {
+                "EXPO_PUBLIC_RADAR_PUBLISHABLE_KEY": "prj_test_pk_7fae8848080509ff855ccac5ac8e4fd0552756bf",
+                "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_YXBwYXJlbnQtZmlsbHktMTEuY2xlcmsuYWNjb3VudHMuZGV2JA",
+                "EXPO_PUBLIC_API_URL": "https://omni-lilac.vercel.app",
+                "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
+            }
+        },
+        "production": {
+            "channel": "production",
+            "android": {
+                "buildType": "apk"
+            },
+            "env": {
+                "EXPO_PUBLIC_RADAR_PUBLISHABLE_KEY": "prj_test_pk_7fae8848080509ff855ccac5ac8e4fd0552756bf",
+                "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_YXBwYXJlbnQtZmlsbHktMTEuY2xlcmsuYWNjb3VudHMuZGV2JA",
+                "EXPO_PUBLIC_API_URL": "https://omni-lilac.vercel.app",
+                "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
+            }
+        }
+    },
+    "submit": {
+        "production": {}
+    }
+}

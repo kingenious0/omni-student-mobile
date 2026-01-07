@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "student-mobile",
-    "slug": "student-mobile",
+    "name": "Omni-Mobile",
+    "slug": "omni",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -19,7 +19,12 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ],
+      "package": "com.kingeniouscreativestudio.omni"
     },
     "web": {
       "output": "static",
@@ -33,16 +38,39 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#000000",
           "dark": {
             "backgroundColor": "#000000"
           }
+        }
+      ],
+      "expo-secure-store",
+      [
+        "react-native-radar",
+        {
+          "locationAlwaysPermission": "Location access is required for background tracking during deliveries.",
+          "locationWhenInUsePermission": "Location access is required to track your run.",
+          "backgroundMode": true
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "0de84e35-ff63-416a-af77-c913e61daaed"
+      }
+    },
+    "owner": "kingenious-creative-studio",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/0de84e35-ff63-416a-af77-c913e61daaed",
+      "useClassicUpdates": false
     }
   }
 }
