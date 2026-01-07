@@ -148,6 +148,18 @@ export default function WebViewScreen({ routePath }: WebViewScreenProps) {
                 mediaPlaybackRequiresUserAction={false}
                 pullToRefreshEnabled={true}
 
+                onMessage={(event) => {
+                    try {
+                        const data = JSON.parse(event.nativeEvent.data);
+                        if (data.type === 'PAYMENT_SUCCESS') {
+                            // Navigate to the native Orders tab
+                            router.replace('/(tabs)/orders');
+                        }
+                    } catch (e) {
+                        // Ignore non-JSON messages
+                    }
+                }}
+
                 // CRITICAL: Handle Android Process Crashes/Terminations
                 onRenderProcessGone={syntheticEvent => {
                     const { nativeEvent } = syntheticEvent;
