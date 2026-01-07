@@ -35,21 +35,23 @@ export default function TabLayout() {
             marginBottom: 10,
           },
           tabBarStyle: {
-            backgroundColor: 'rgba(20, 20, 20, 0.98)',
-            borderTopWidth: 2,
-            borderColor: '#39FF14', // Neon Green border to verify update
-            height: 80,
+            backgroundColor: 'rgba(10, 10, 10, 0.95)', // Deep dark, nearly opaque
+            borderWidth: 1,
+            borderTopWidth: 1, // Consistent border
+            borderColor: 'rgba(57, 255, 20, 0.15)', // Subtle Omni Green glow
+            height: 70, // Standard height
             position: 'absolute',
-            bottom: bottomMargin + 25, // Extreme lift to clear buttons
-            left: 15,
-            right: 15,
-            elevation: 10,
-            borderRadius: 40,
-            shadowColor: '#39FF14',
-            shadowOffset: { width: 0, height: 5 },
-            shadowOpacity: 0.3,
-            shadowRadius: 10,
-            paddingTop: 15,
+            bottom: bottomMargin + 12, // Professional floating gap
+            left: 16,
+            right: 16,
+            elevation: 8,
+            borderRadius: 35, // Smooth pill shape
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 10 },
+            shadowOpacity: 0.5,
+            shadowRadius: 20,
+            paddingTop: 8, // Center icons vertically
+            paddingBottom: Platform.OS === 'ios' ? 0 : 8, // Adjust for iOS pill vs Android
           },
           headerShown: false,
         }}>

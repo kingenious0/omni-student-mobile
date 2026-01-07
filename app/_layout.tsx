@@ -50,7 +50,7 @@ function RootLayoutNav({ colorScheme }: { colorScheme: any }) {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
+      <Stack screenOptions={{ contentStyle: { backgroundColor: '#050505' } }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="vendor-terminal" options={{
