@@ -12,6 +12,13 @@ import { tokenCache } from '@/lib/auth';
 import TrackingProvider, { useTracking } from '@/components/TrackingProvider';
 import { useColorScheme } from 'react-native';
 
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { enableEdgeToEdge } from 'react-native-safe-area-context';
+
+// Enable edge-to-edge content (draw behind system bars)
+// This is critical for transparent navigation bars on Android
+enableEdgeToEdge();
+
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
 
@@ -27,7 +34,11 @@ export default function RootLayout() {
     <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
       <ClerkLoaded>
         <TrackingProvider>
-          <RootLayoutNav colorScheme={colorScheme} />
+          <TrackingProvider>
+            <SafeAreaProvider>
+              <RootLayoutNav colorScheme={colorScheme} />
+            </SafeAreaProvider>
+          </TrackingProvider>
         </TrackingProvider>
       </ClerkLoaded>
     </ClerkProvider>
@@ -39,6 +50,13 @@ function RootLayoutNav({ colorScheme }: { colorScheme: any }) {
   const { user, isLoaded } = useUser();
 
   useEffect(() => {
+    // Match System Navigation Bar to our App Theme
+    // This removes the ugly gray block at the bottom
+    import('expo-navigation-bar').then(NavigationBar => {
+      NavigationBar.setBackgroundColorAsync('#050505');
+      // NavigationBar.setButtonStyleAsync('light'); // Ensure buttons are visible on dark bg
+    });
+
     if (isLoaded && user) {
       // Auto-start native tracking for residents
       const isRunner = user.publicMetadata?.role === 'RUNNER' || user.publicMetadata?.isRunner;
