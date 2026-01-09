@@ -5,6 +5,8 @@ import Radar from 'react-native-radar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth, useSession } from '@clerk/clerk-expo';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 
 interface WebViewScreenProps {
     routePath: string;
@@ -52,9 +54,8 @@ export default function WebViewScreen({ routePath }: WebViewScreenProps) {
                 nextAppState === 'active'
             ) {
                 console.log('App has come to the foreground! checking webview...');
-                // Optional: We can force a reload if needed, but usually just being active is enough.
-                // If users report persistent blank screens, uncomment the line below:
-                // setWebviewKey(prev => prev + 1); 
+                // Force reload to ensure session sync is fresh and we verify we aren't on the landing page
+                setWebviewKey(prev => prev + 1);
             }
             appState.current = nextAppState;
         });
@@ -148,15 +149,36 @@ export default function WebViewScreen({ routePath }: WebViewScreenProps) {
                 mediaPlaybackRequiresUserAction={false}
                 pullToRefreshEnabled={true}
 
-                onMessage={(event) => {
+                onMessage={async (event) => {
                     try {
                         const data = JSON.parse(event.nativeEvent.data);
+
                         if (data.type === 'PAYMENT_SUCCESS') {
-                            // Navigate to the native Orders tab
                             router.replace('/(tabs)/orders');
                         }
+
+                        if (data.type === 'DOWNLOAD_BLOB') {
+                            const { base64, filename, mimetype } = data;
+
+                            // strip data:image/png;base64, prefix if it exists
+                            const cleanBase64 = base64.includes(',') ? base64.split(',')[1] : base64;
+
+                            const fileUri = `${FileSystem.documentDirectory}${filename}`;
+
+                            await FileSystem.writeAsStringAsync(fileUri, cleanBase64, {
+                                encoding: FileSystem.EncodingType.Base64
+                            });
+
+                            if (await Sharing.isAvailableAsync()) {
+                                await Sharing.shareAsync(fileUri, {
+                                    mimeType: mimetype,
+                                    dialogTitle: `Save ${filename}`
+                                });
+                            }
+                        }
                     } catch (e) {
-                        // Ignore non-JSON messages
+                        // Ignore non-JSON messages or failures
+                        console.log('WebView Message Error:', e);
                     }
                 }}
 
