@@ -8,17 +8,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const activeColor = '#39FF14';
-  const inactiveColor = '#666';
-  const bgColor = '#050505';
-
+  const isDark = colorScheme === 'dark';
   const insets = useSafeAreaInsets();
 
-  // Aggressive clearance for system buttons (Back/Home/Recent)
-  // We'll lift the bar off the floor entirely to create a 'Floating Island'
-  const isButtonNav = insets.bottom === 0;
-  const bottomMargin = isButtonNav ? 20 : insets.bottom;
-  const tabHeight = 70;
+  // Dynamic Theme Colors
+  const bgColor = isDark ? '#050505' : '#FFFFFF';
+  const activeColor = isDark ? '#39FF14' : '#000000'; // Neon Green or Black
+  const inactiveColor = isDark ? '#666666' : '#999999';
+  const borderColor = isDark ? 'rgba(57, 255, 20, 0.15)' : 'rgba(0,0,0,0.05)';
 
   return (
     <>
@@ -32,26 +29,19 @@ export default function TabLayout() {
             fontWeight: '900',
             textTransform: 'uppercase',
             letterSpacing: 0.5,
-            marginBottom: 10,
+            marginBottom: 4,
           },
           tabBarStyle: {
-            backgroundColor: 'rgba(10, 10, 10, 0.95)', // Deep dark, nearly opaque
-            borderWidth: 1,
-            borderTopWidth: 1, // Consistent border
-            borderColor: 'rgba(57, 255, 20, 0.15)', // Subtle Omni Green glow
-            height: 70, // Standard height
-            position: 'absolute',
-            bottom: bottomMargin + 12, // Professional floating gap
-            left: 16,
-            right: 16,
-            elevation: 8,
-            borderRadius: 35, // Smooth pill shape
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 10 },
-            shadowOpacity: 0.5,
-            shadowRadius: 20,
-            paddingTop: 8, // Center icons vertically
-            paddingBottom: Platform.OS === 'ios' ? 0 : 8, // Adjust for iOS pill vs Android
+            // Robust Safe Area Implementation
+            position: 'relative', // No longer absolute (fixes overlap)
+            backgroundColor: bgColor,
+            borderTopWidth: 1,
+            borderColor: borderColor,
+            height: 60 + insets.bottom,
+            paddingBottom: insets.bottom,
+            paddingTop: 8,
+            elevation: 0, // Flat look
+            shadowOpacity: 0, // Remove shadow for robust look
           },
           headerShown: false,
         }}>

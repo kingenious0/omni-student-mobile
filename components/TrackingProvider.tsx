@@ -19,7 +19,7 @@ export default function TrackingProvider({ children }: { children: React.ReactNo
 
     useEffect(() => {
         const pk = process.env.EXPO_PUBLIC_RADAR_PUBLISHABLE_KEY;
-        if (pk) {
+        if (pk && Radar && Radar.initialize) {
             Radar.initialize(pk);
         }
     }, []);
@@ -34,18 +34,24 @@ export default function TrackingProvider({ children }: { children: React.ReactNo
     }, [user]);
 
     const startTracking = async (mode: 'RESPONSIVE' | 'EFFICIENT' = 'RESPONSIVE') => {
-        // Request Permissions (Foreground = false)
-        // Background prompts can be slow and hang the UI on login.
-        // We'll use foreground for now, and request background later if needed.
-        const status = await Radar.requestPermissions(false);
-        console.log('Radar Permission Status:', status);
+        if (!Radar) return;
 
-        if (status === 'GRANTED_BACKGROUND' || status === 'GRANTED_FOREGROUND') {
-            if (mode === 'RESPONSIVE') {
-                await Radar.startTrackingResponsive();
-            } else {
-                await Radar.startTrackingEfficient();
+        try {
+            // Request Permissions (Foreground = false)
+            // Background prompts can be slow and hang the UI on login.
+            // We'll use foreground for now, and request background later if needed.
+            const status = await Radar.requestPermissions(false);
+            console.log('Radar Permission Status:', status);
+
+            if (status === 'GRANTED_BACKGROUND' || status === 'GRANTED_FOREGROUND') {
+                if (mode === 'RESPONSIVE') {
+                    await Radar.startTrackingResponsive();
+                } else {
+                    await Radar.startTrackingEfficient();
+                }
             }
+        } catch (e) {
+            console.warn('Radar startTracking failed:', e);
         }
     };
 

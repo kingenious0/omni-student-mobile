@@ -1,23 +1,30 @@
+import 'react-native-reanimated';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import 'react-native-reanimated';
 import '../global.css'; // Keep import even if NativeWind is disabled, just in case
 
 import { ClerkProvider, ClerkLoaded, useUser } from '@clerk/clerk-expo';
 import { tokenCache } from '@/lib/auth';
 import TrackingProvider, { useTracking } from '@/components/TrackingProvider';
-import { useColorScheme } from 'react-native';
-
+import { useColorScheme, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { enableEdgeToEdge } from 'react-native-safe-area-context';
+import { usePathname, useRouter, useSegments } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 
 // Enable edge-to-edge content (draw behind system bars)
 // This is critical for transparent navigation bars on Android
-enableEdgeToEdge();
+try {
+  if (Platform.OS === 'android' && enableEdgeToEdge) {
+    enableEdgeToEdge();
+  }
+} catch (e) {
+  console.warn('Edge-to-edge failed:', e);
+}
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -34,11 +41,9 @@ export default function RootLayout() {
     <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
       <ClerkLoaded>
         <TrackingProvider>
-          <TrackingProvider>
-            <SafeAreaProvider>
-              <RootLayoutNav colorScheme={colorScheme} />
-            </SafeAreaProvider>
-          </TrackingProvider>
+          <SafeAreaProvider>
+            <RootLayoutNav colorScheme={colorScheme} />
+          </SafeAreaProvider>
         </TrackingProvider>
       </ClerkLoaded>
     </ClerkProvider>
@@ -48,13 +53,47 @@ export default function RootLayout() {
 function RootLayoutNav({ colorScheme }: { colorScheme: any }) {
   const { startTracking } = useTracking();
   const { user, isLoaded } = useUser();
+  const pathname = usePathname();
+  const router = useRouter();
+  const segments = useSegments();
+
+  // Save Navigation State
+  useEffect(() => {
+    if (pathname && pathname !== '/') {
+      SecureStore.setItemAsync('NAVIGATION_STATE', pathname).catch(() => { });
+    }
+  }, [pathname]);
+
+  // Restore Navigation State
+  useEffect(() => {
+    const restore = async () => {
+      if (segments.length === 0) {
+        const saved = await SecureStore.getItemAsync('NAVIGATION_STATE').catch(() => null);
+        if (saved && saved !== '/') {
+          console.log('Restoring Navigation State:', saved);
+          router.replace(saved as any);
+        }
+      }
+    };
+    restore();
+  }, [isLoaded]); // Run when loaded
+
+  const isDark = colorScheme === 'dark';
+
+  // Dynamic Theme Colors
+  const bgColor = isDark ? '#050505' : '#FFFFFF';
+  const textColor = isDark ? '#FFFFFF' : '#000000';
+  const headerBg = isDark ? '#050505' : '#F5F5F7';
+
+  // Omni Green / Omni Blue
+  const accentColor = '#39FF14';
+  const runnerColor = '#3498db';
 
   useEffect(() => {
     // Match System Navigation Bar to our App Theme
-    // This removes the ugly gray block at the bottom
     import('expo-navigation-bar').then(NavigationBar => {
-      NavigationBar.setBackgroundColorAsync('#050505');
-      // NavigationBar.setButtonStyleAsync('light'); // Ensure buttons are visible on dark bg
+      NavigationBar.setBackgroundColorAsync(bgColor);
+      NavigationBar.setButtonStyleAsync(isDark ? 'light' : 'dark');
     });
 
     if (isLoaded && user) {
@@ -64,35 +103,39 @@ function RootLayoutNav({ colorScheme }: { colorScheme: any }) {
         startTracking('EFFICIENT');
       }
     }
-  }, [isLoaded, user]);
+  }, [isLoaded, user, isDark, bgColor]);
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ contentStyle: { backgroundColor: '#050505' } }}>
+    <ThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
+      <Stack screenOptions={{ contentStyle: { backgroundColor: bgColor } }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+
         <Stack.Screen name="vendor-terminal" options={{
           title: 'Vendor Terminal',
-          headerStyle: { backgroundColor: '#050505' },
-          headerTintColor: '#39FF14',
+          headerStyle: { backgroundColor: headerBg },
+          headerTintColor: accentColor,
           headerTitleStyle: { fontWeight: '900' }
         }} />
+
         <Stack.Screen name="runner-operations" options={{
           title: 'Runner Terminal',
-          headerStyle: { backgroundColor: '#050505' },
-          headerTintColor: '#3498db',
+          headerStyle: { backgroundColor: headerBg },
+          headerTintColor: runnerColor,
           headerTitleStyle: { fontWeight: '900' }
         }} />
+
         <Stack.Screen name="profile-management" options={{
           title: 'Account Logistics',
-          headerStyle: { backgroundColor: '#050505' },
-          headerTintColor: 'white',
+          headerStyle: { backgroundColor: headerBg },
+          headerTintColor: textColor,
           headerTitleStyle: { fontWeight: '900' }
         }} />
+
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
         <Stack.Screen name="+not-found" />
       </Stack>
-      <StatusBar style="auto" />
+      <StatusBar style={isDark ? "light" : "dark"} />
     </ThemeProvider>
   );
 }

@@ -37,8 +37,14 @@ export default function SignUpScreen() {
         }
     };
 
+    const [isVerifying, setIsVerifying] = useState(false);
+
+    // ... (existing code)
+
     const onPressVerify = async () => {
-        if (!isLoaded) return;
+        if (!isLoaded || isVerifying) return;
+        setIsVerifying(true);
+
         try {
             const completeSignUp = await signUp.attemptEmailAddressVerification({
                 code,
@@ -48,12 +54,23 @@ export default function SignUpScreen() {
                 router.replace('/');
             }
         } catch (err: any) {
-            alert(err.errors[0].message);
+            console.error('Verification Error:', err);
+            const msg = err.errors?.[0]?.message || 'Verification failed';
+
+            if (msg.toLowerCase().includes('already verified')) {
+                alert('Email verified successfully! Please sign in.');
+                router.replace('/(auth)/sign-in');
+            } else {
+                alert(msg);
+            }
+        } finally {
+            setIsVerifying(false);
         }
     };
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
+            {/* Headers ... */}
             <View style={styles.header}>
                 <Text style={styles.title}>{pendingVerification ? 'Verify Email' : 'Join OMNI'}</Text>
                 <Text style={styles.subtitle}>{pendingVerification ? 'Verification Required' : 'Establish New Uplink'}</Text>
@@ -98,8 +115,12 @@ export default function SignUpScreen() {
                         onChangeText={(code) => setCode(code)}
                         style={styles.input}
                     />
-                    <TouchableOpacity onPress={onPressVerify} style={styles.button}>
-                        <Text style={styles.buttonText}>VERIFY EMAIL</Text>
+                    <TouchableOpacity
+                        onPress={onPressVerify}
+                        style={[styles.button, isVerifying && { opacity: 0.5 }]}
+                        disabled={isVerifying}
+                    >
+                        <Text style={styles.buttonText}>{isVerifying ? 'VERIFYING...' : 'VERIFY EMAIL'}</Text>
                     </TouchableOpacity>
                 </View>
             )}
