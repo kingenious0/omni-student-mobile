@@ -63,18 +63,24 @@ export default function ProfileScreen() {
                             onPress={() => router.push('/profile-management')}
                         />
                         <View style={s.divider} />
-                        <MenuItem
-                            icon="store"
-                            label="Vendor Terminal"
-                            onPress={() => router.push('/vendor-terminal')}
-                            color={COLORS.primary}
-                        />
-                        <MenuItem
-                            icon="running"
-                            label="Runner Operations"
-                            onPress={() => router.push('/runner-operations')}
-                            color="#3498db"
-                        />
+
+                        {user?.publicMetadata?.role === 'VENDOR' && (
+                            <MenuItem
+                                icon="store"
+                                label="Vendor Terminal"
+                                onPress={() => router.push('/vendor-terminal')}
+                                color={COLORS.primary}
+                            />
+                        )}
+
+                        {user?.publicMetadata?.role === 'RUNNER' && (
+                            <MenuItem
+                                icon="running"
+                                label="Runner Operations"
+                                onPress={() => router.push('/runner-operations')}
+                                color="#3498db"
+                            />
+                        )}
                     </View>
 
                     {/* Logout */}
